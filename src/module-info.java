@@ -1,0 +1,9 @@
+/**
+ * 
+ */
+/**
+ * @author Hugo
+ *
+ */
+module ProjetReseau {
+}
