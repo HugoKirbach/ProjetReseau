@@ -31,22 +31,24 @@ public class Client implements Runnable {
                 final BufferedReader br = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
 
                 final byte[] buffer = new byte[80];
-                String line = br.readLine();
-                if(line != null) {
-                    // envoi de la chaîne au serveur
-                    out.write(line.getBytes(StandardCharsets.ISO_8859_1));
+                while (true) {
+                    String line = br.readLine();
+                    if (line != null) {
+                        // envoi de la chaîne au serveur
+                        out.write(line.getBytes(StandardCharsets.ISO_8859_1));
 
-                    // récupération de la chaîne en majuscules
-                    final int numRead = in.read(buffer);
+                        // récupération de la chaîne en majuscules
+                        final int numRead = in.read(buffer);
 
-                    // le serveur utilise de l'utf-8 donc si on envoie des caractères exotiques, crack !
-                    System.out.println(new String(buffer, 0, numRead, StandardCharsets.ISO_8859_1));
+                        // le serveur utilise de l'utf-8 donc si on envoie des caractères exotiques, crack !
+                        System.out.println(new String(buffer, 0, numRead, StandardCharsets.ISO_8859_1));
+                    }
                 }
             }
 
-		} catch(IOException e) {
-			e.printStackTrace(System.err);
-		}
+        } catch(IOException e) {
+            e.printStackTrace(System.err);
+        }
     }
 
 }

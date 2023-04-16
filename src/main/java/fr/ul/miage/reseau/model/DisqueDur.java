@@ -34,6 +34,11 @@ public class DisqueDur {
         return existant.isPresent();
     }
 
+    public boolean exist(String nom) {
+        final Optional<Fichier> existant = fichiers.stream().filter(f -> f.getNom().equals(nom)).findAny();
+        return existant.isPresent();
+    }
+
     public static class Fichier {
         private final String nom;
         private String contenu;
