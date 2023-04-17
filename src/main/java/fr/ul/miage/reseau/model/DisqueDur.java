@@ -39,6 +39,10 @@ public class DisqueDur {
         return existant.isPresent();
     }
 
+    public void display()
+    {
+        fichiers.stream().forEach(f -> System.out.println(f.getNom() + " - "+ f.getContenu()));
+    }
     public static class Fichier {
         private final String nom;
         private String contenu;

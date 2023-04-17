@@ -10,6 +10,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Serveur web minimaliste.
@@ -28,14 +30,14 @@ public class Serveur implements Runnable {
 
                 System.out.println("Attente de connexion ...");
                 final Socket client = server.accept();
+                DisqueDur disqueDur = new DisqueDur();
+                boolean start = true;
 
                 final OutputStream out = client.getOutputStream();
                 final InputStream in = client.getInputStream();
 
-                while(true)
+                while(start)
                 {
-                    // on suppose que la requête sera envoyée en une fois
-                    // et que sa taille sera inférieure à 1024
                     final byte[] buffer = new byte[1024];
                     int numRead = in.read(buffer);
 
@@ -43,21 +45,30 @@ public class Serveur implements Runnable {
                     System.out.println("< " + str);
 
                     String substr = str.substring(0,3);
-                    DisqueDur disqueDur = new DisqueDur();
                     String resultat = new String();
-
+                    //disqueDur.display();
                     switch(substr.toUpperCase())
                     {
                         case "GET" :
                             String[] tabString = str.split("\\s+");
                             resultat = disqueDur.get(tabString[1]);
                             break;
-                        case "SET" : //
-                            //TODO prendre en compte qu'il y a 2 paramètres
-                            if (Objects.equals(str.substring(0, 5), "SETNX")){
-                                System.out.println("SETNX");
+                        case "SET" :
+                            String[] splitSpace = str.split("\\s+");
+
+                            String regex = "\"([^\"]*)\"";
+                            Pattern pattern = Pattern.compile(regex);
+                            Matcher matcher = pattern.matcher(splitSpace[2]);
+
+                            if (matcher.find()) {
+                                String extractedString = matcher.group(1);
+                                System.out.println(splitSpace[1]);
+                                System.out.println(extractedString);
+                                disqueDur.put(splitSpace[1], extractedString);
+                                resultat = "\""+extractedString+"\"";
+                            } else {
+                                resultat = "Erreur extraite.";
                             }
-                            System.out.println("SET");
                             break;
                         case "STR" : // Nabil
                             if (Objects.equals(str.substring(0, 6).toUpperCase(), "STRLEN")){
@@ -109,8 +120,6 @@ public class Serveur implements Runnable {
                                         nbExist++;
                                     }
                                 }
-                                //Affiche
-
                                 resultat = String.valueOf((nbExist));
                             }
                             break;
@@ -133,6 +142,13 @@ public class Serveur implements Runnable {
                         case "UNS" : //
                             if (Objects.equals(str.substring(0, 11).toUpperCase(), "UNSUBSCRIBE")){
 
+                            }
+                            break;
+
+                        case "QUI" : //
+                            if (Objects.equals(str.substring(0, 4).toUpperCase(), "QUIT")){
+                                start = false;
+                                resultat = "Serveur est fermé.";
                             }
                             break;
                         default:
