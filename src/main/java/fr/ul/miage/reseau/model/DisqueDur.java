@@ -39,6 +39,11 @@ public class DisqueDur {
         return existant.isPresent();
     }
 
+    public boolean containsKey(String nom) {
+        return exist(nom);
+    }
+
+
     public void display()
     {
         fichiers.stream().forEach(f -> System.out.println(f.getNom() + " - "+ f.getContenu()));

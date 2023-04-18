@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.HashMap;
 
 /**
  * Serveur web minimaliste.
@@ -47,6 +48,7 @@ public class Serveur implements Runnable {
                     String substr = str.substring(0,3);
                     String resultat = new String();
                     //disqueDur.display();
+
                     switch(substr.toUpperCase())
                     {
                         case "GET" :
@@ -72,13 +74,33 @@ public class Serveur implements Runnable {
                             break;
                         case "STR" : // Nabil
                             if (Objects.equals(str.substring(0, 6).toUpperCase(), "STRLEN")){
-                                System.out.println("STRLEN");
+                                String[] strSpace = str.split("\\s+", 3);
+                                String key = disqueDur.get(strSpace[1]);
+                                int longueur = key.length();
+                                resultat = "" + longueur;
                             }
                             break;
                         case "APP" : // Nabil
                             //TODO prendre en compte qu'il y a 2 paramètres
                             if (Objects.equals(str.substring(0, 6).toUpperCase(), "APPEND")){
-                                System.out.println("APPEND");
+
+                                String[] commandSplit = str.split(" ", 3);
+                                String key = commandSplit[1];
+                                String value = commandSplit[2];
+
+                                String valueNettoye = value.substring(1, value.length() - 1);
+
+                                if (disqueDur.containsKey(key) && disqueDur.get(key) instanceof String) {
+                                    String ancienneValeur = disqueDur.get(key);
+                                    String nouvelleValeur = ancienneValeur.concat(valueNettoye);
+                                    disqueDur.put(key, nouvelleValeur);
+                                } else {
+                                    disqueDur.put(key, valueNettoye);
+                                }
+
+                                int longueur = disqueDur.get(key).length();
+                                resultat = ""+longueur;
+
                             }
                             break;
                         case "INC" : // Hugo
