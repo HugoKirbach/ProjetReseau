@@ -49,24 +49,26 @@ public class Serveur implements Runnable {
                     String resultat = new String();
                     //disqueDur.display();
 
+                    String[] splitSpaceStr = str.split("\\s+");
+
                     switch(substr.toUpperCase())
                     {
                         case "GET" :
-                            String[] tabString = str.split("\\s+");
-                            resultat = disqueDur.get(tabString[1]);
+                            //String[] tabString = str.split("\\s+");
+                            resultat = disqueDur.get(splitSpaceStr[1]);
                             break;
                         case "SET" :
-                            String[] splitSpace = str.split("\\s+");
+                            //String[] splitSpace = str.split("\\s+");
 
                             String regex = "\"([^\"]*)\"";
                             Pattern pattern = Pattern.compile(regex);
-                            Matcher matcher = pattern.matcher(splitSpace[2]);
+                            Matcher matcher = pattern.matcher(splitSpaceStr[2]);
 
                             if (matcher.find()) {
                                 String extractedString = matcher.group(1);
-                                System.out.println(splitSpace[1]);
+                                System.out.println(splitSpaceStr[1]);
                                 System.out.println(extractedString);
-                                disqueDur.put(splitSpace[1], extractedString);
+                                disqueDur.put(splitSpaceStr[1], extractedString);
                                 resultat = "\""+extractedString+"\"";
                             } else {
                                 resultat = "Erreur extraite.";
@@ -74,8 +76,8 @@ public class Serveur implements Runnable {
                             break;
                         case "STR" : // Nabil
                             if (Objects.equals(str.substring(0, 6).toUpperCase(), "STRLEN")){
-                                String[] strSpace = str.split("\\s+", 3);
-                                String key = disqueDur.get(strSpace[1]);
+                                //String[] strSpace = str.split("\\s+", 3);
+                                String key = disqueDur.get(splitSpaceStr[1]);
                                 int longueur = key.length();
                                 resultat = "" + longueur;
                             }
@@ -84,9 +86,9 @@ public class Serveur implements Runnable {
                             //TODO prendre en compte qu'il y a 2 paramètres
                             if (Objects.equals(str.substring(0, 6).toUpperCase(), "APPEND")){
 
-                                String[] commandSplit = str.split(" ", 3);
-                                String key = commandSplit[1];
-                                String value = commandSplit[2];
+                                //String[] commandSplit = str.split(" ", 3);
+                                String key = splitSpaceStr[1];
+                                String value = splitSpaceStr[2];
 
                                 String valueNettoye = value.substring(1, value.length() - 1);
 
@@ -105,12 +107,28 @@ public class Serveur implements Runnable {
                             break;
                         case "INC" : // Hugo
                             if (str.substring(0,4).toUpperCase() == "INCR"){
-
+                                try {
+                                    //gérer le cas clé n'existe pas --> set à 0
+                                    if (disqueDur.get(splitSpaceStr[1]) == null) {
+                                        disqueDur.put(splitSpaceStr[1], "0");
+                                        resultat = disqueDur.get(splitSpaceStr[1]);
+                                    } else resultat = (Integer.parseInt(disqueDur.get(splitSpaceStr[1])) +1)+"";
+                                } catch (Exception e) {
+                                    resultat = "(error) value is not an integer or out of range";
+                                }
                             }
                             break;
                         case "DEC" : // Hugo
                             if (str.substring(0,4).toUpperCase() == "DECR"){
-
+                                try {
+                                    //gérer le cas clé n'existe pas --> set à 0
+                                    if (disqueDur.get(splitSpaceStr[1]) == null) {
+                                        disqueDur.put(splitSpaceStr[1], "0");
+                                        resultat = disqueDur.get(splitSpaceStr[1]);
+                                    } else resultat = (Integer.parseInt(disqueDur.get(splitSpaceStr[1])) -1)+"";
+                                } catch (Exception e) {
+                                    resultat = "(error) value is not an integer or out of range";
+                                }
                             }
                             break;
                         case "DEL" :
