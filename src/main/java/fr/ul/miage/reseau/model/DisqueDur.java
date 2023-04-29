@@ -1,8 +1,6 @@
 package fr.ul.miage.reseau.model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DisqueDur {
@@ -28,9 +26,11 @@ public class DisqueDur {
 
     public boolean del(String nom) {
         final Optional<Fichier> existant = fichiers.stream().filter(f -> f.getNom().equals(nom)).findAny();
+
         if(existant.isPresent()) {
             this.fichiers.remove(existant.get());
         }
+
         return existant.isPresent();
     }
 
@@ -39,11 +39,39 @@ public class DisqueDur {
         return existant.isPresent();
     }
 
+    //mettre cpt ici
+    public void ExpireDuration(String nom, String second){
+        System.out.println(second);
+        final Optional<Fichier> existant = fichiers.stream().filter(f -> f.getNom().equals(nom)).findAny();
+        int seconds = Integer.parseInt(second); // Convertir la chaîne en un entier
+        Timer timer = new Timer();
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+
+                //supprimer ici
+                delete(nom);
+            }
+        };
+        timer.schedule(task, seconds * 1000);
+
+
+    }
+
     public boolean containsKey(String nom) {
         return exist(nom);
     }
 
+    public void delete(String nom){
+        for (Fichier fichier : this.fichiers) {
 
+            if (fichier.getNom().equals(nom)) {
+                this.fichiers.remove(fichier);
+                break;
+            }
+        }
+    }
     public void display()
     {
         fichiers.stream().forEach(f -> System.out.println(f.getNom() + " - "+ f.getContenu()));

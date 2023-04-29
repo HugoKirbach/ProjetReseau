@@ -10,6 +10,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.HashMap;
@@ -50,7 +52,6 @@ public class Serveur implements Runnable {
                     //disqueDur.display();
 
                     String[] splitSpaceStr = str.split("\\s+");
-
                     switch(substr.toUpperCase())
                     {
                         case "GET" :
@@ -166,6 +167,17 @@ public class Serveur implements Runnable {
                         case "EXP" ://Adrien
                             //TODO prendre en compte qu'il y a 2 paramètres
                             if (Objects.equals(str.substring(0, 6).toUpperCase(), "EXPIRE")){
+                                //System.out.println(disqueDur.get(splitSpaceStr[1]));
+                                if(disqueDur.get(splitSpaceStr[1])=="null") {
+                                    resultat=disqueDur.get(splitSpaceStr[1]);
+                                }
+                                else {
+                                    String key = splitSpaceStr[1];
+                                    String second = splitSpaceStr[2];
+                                    disqueDur.ExpireDuration(key,second);
+                                    resultat="en cours";
+                                }
+
 
                             }
                             break;
