@@ -20,8 +20,8 @@ import java.util.HashMap;
  * Serveur web minimaliste.
  */
 public class Serveur implements Runnable {
-    
-   public static void main(String[] args) {
+
+    public static void main(String[] args) {
         (new Serveur()).run();
     }
 
@@ -52,7 +52,7 @@ public class Serveur implements Runnable {
                     //disqueDur.display();
 
                     String[] splitSpaceStr = str.split("\\s+");
-                    switch(substr.toUpperCase())
+                    switch(splitSpaceStr[0].toUpperCase())
                     {
                         case "GET" :
                             //String[] tabString = str.split("\\s+");
@@ -75,70 +75,61 @@ public class Serveur implements Runnable {
                                 resultat = "Erreur extraite.";
                             }
                             break;
-                        case "STR" : // Nabil
-                            if (Objects.equals(str.substring(0, 6).toUpperCase(), "STRLEN")){
-                                //String[] strSpace = str.split("\\s+", 3);
-                                String key = disqueDur.get(splitSpaceStr[1]);
-                                int longueur = key.length();
-                                resultat = "" + longueur;
-                            }
+                        case "STRLEN" : // Nabil
+                            //String[] strSpace = str.split("\\s+", 3);
+                            String key = disqueDur.get(splitSpaceStr[1]);
+                            int longueur = key.length();
+                            resultat = "" + longueur;
                             break;
-                        case "APP" : // Nabil
+                        case "APPEND" : // Nabil
                             //TODO prendre en compte qu'il y a 2 paramètres
-                            if (Objects.equals(str.substring(0, 6).toUpperCase(), "APPEND")){
+                            //String[] commandSplit = str.split(" ", 3);
+                            String keyAppend = splitSpaceStr[1];
+                            String value = splitSpaceStr[2];
 
-                                //String[] commandSplit = str.split(" ", 3);
-                                String key = splitSpaceStr[1];
-                                String value = splitSpaceStr[2];
+                            String valueNettoye = value.substring(1, value.length() - 1);
 
-                                String valueNettoye = value.substring(1, value.length() - 1);
+                            if (disqueDur.containsKey(keyAppend) && disqueDur.get(keyAppend) instanceof String) {
+                                String ancienneValeur = disqueDur.get(keyAppend);
+                                String nouvelleValeur = ancienneValeur.concat(valueNettoye);
+                                disqueDur.put(keyAppend, nouvelleValeur);
+                            } else {
+                                disqueDur.put(keyAppend, valueNettoye);
+                            }
 
-                                if (disqueDur.containsKey(key) && disqueDur.get(key) instanceof String) {
-                                    String ancienneValeur = disqueDur.get(key);
-                                    String nouvelleValeur = ancienneValeur.concat(valueNettoye);
-                                    disqueDur.put(key, nouvelleValeur);
-                                } else {
-                                    disqueDur.put(key, valueNettoye);
-                                }
+                            int longueurAppend = disqueDur.get(keyAppend).length();
+                            resultat = ""+longueurAppend;
 
-                                int longueur = disqueDur.get(key).length();
-                                resultat = ""+longueur;
-
+                            break;
+                        case "INCR" : // Hugo
+                            try {
+                                //gérer le cas clé n'existe pas --> set à 0
+                                if (disqueDur.get(splitSpaceStr[1]) == null) {
+                                    disqueDur.put(splitSpaceStr[1], "0");
+                                    resultat = disqueDur.get(splitSpaceStr[1]);
+                                } else resultat = (Integer.parseInt(disqueDur.get(splitSpaceStr[1])) +1)+"";
+                            } catch (Exception e) {
+                                resultat = "(error) value is not an integer or out of range";
                             }
                             break;
-                        case "INC" : // Hugo
-                            if (str.substring(0,4).toUpperCase() == "INCR"){
-                                try {
-                                    //gérer le cas clé n'existe pas --> set à 0
-                                    if (disqueDur.get(splitSpaceStr[1]) == null) {
-                                        disqueDur.put(splitSpaceStr[1], "0");
-                                        resultat = disqueDur.get(splitSpaceStr[1]);
-                                    } else resultat = (Integer.parseInt(disqueDur.get(splitSpaceStr[1])) +1)+"";
-                                } catch (Exception e) {
-                                    resultat = "(error) value is not an integer or out of range";
-                                }
+                        case "DECR" : // Hugo
+                            try {
+                                //gérer le cas clé n'existe pas --> set à 0
+                                if (disqueDur.get(splitSpaceStr[1]) == null) {
+                                    disqueDur.put(splitSpaceStr[1], "0");
+                                    resultat = disqueDur.get(splitSpaceStr[1]);
+                                } else resultat = (Integer.parseInt(disqueDur.get(splitSpaceStr[1])) -1)+"";
+                            } catch (Exception e) {
+                                resultat = "(error) value is not an integer or out of range";
                             }
-                            break;
-                        case "DEC" : // Hugo
-                            if (str.substring(0,4).toUpperCase() == "DECR"){
-                                try {
-                                    //gérer le cas clé n'existe pas --> set à 0
-                                    if (disqueDur.get(splitSpaceStr[1]) == null) {
-                                        disqueDur.put(splitSpaceStr[1], "0");
-                                        resultat = disqueDur.get(splitSpaceStr[1]);
-                                    } else resultat = (Integer.parseInt(disqueDur.get(splitSpaceStr[1])) -1)+"";
-                                } catch (Exception e) {
-                                    resultat = "(error) value is not an integer or out of range";
-                                }
-                            }
+
                             break;
                         case "DEL" :
                             /*
                                 on peut avoir plusieurs arguments (key)
                              */
-                            String[] stringSplited = str.split("\\s+");
                             int nb = 0;
-                            for (int i = 1; i < stringSplited.length; i++) {
+                            for (int i = 1; i < splitSpaceStr.length; i++) {
                                 if(disqueDur.del(str))
                                 {
                                     nb++;
@@ -146,40 +137,36 @@ public class Serveur implements Runnable {
                             }
                             resultat = String.valueOf(nb);
                             break;
-                        case "EXI" :
-                            if (Objects.equals(str.substring(0, 6).toUpperCase(), "EXISTS")){
+                        case "EXISTS" :
                                 /*
                                     on peut avoir plusieurs arguments (key)
                                  */
-                                String[] strSplited = str.split("\\s+");
-                                int nbExist = 0;
+                            String[] strSplited = str.split("\\s+");
+                            int nbExist = 0;
 
-                                for (int i = 1; i < strSplited.length; i++) {
-                                    String currentKey = strSplited[i];
-                                    if(disqueDur.exist(currentKey))
-                                    {
-                                        nbExist++;
-                                    }
+                            for (int i = 1; i < strSplited.length; i++) {
+                                String currentKey = strSplited[i];
+                                if(disqueDur.exist(currentKey))
+                                {
+                                    nbExist++;
                                 }
-                                resultat = String.valueOf((nbExist));
                             }
+                            resultat = String.valueOf((nbExist));
+
                             break;
                         case "EXP" ://Adrien
                             //TODO prendre en compte qu'il y a 2 paramètres
-                            if (Objects.equals(str.substring(0, 6).toUpperCase(), "EXPIRE")){
-                                //System.out.println(disqueDur.get(splitSpaceStr[1]));
-                                if(disqueDur.get(splitSpaceStr[1])=="null") {
-                                    resultat=disqueDur.get(splitSpaceStr[1]);
-                                }
-                                else {
-                                    String key = splitSpaceStr[1];
-                                    String second = splitSpaceStr[2];
-                                    disqueDur.ExpireDuration(key,second);
-                                    resultat="en cours";
-                                }
-
-
+                            //System.out.println(disqueDur.get(splitSpaceStr[1]));
+                            if(disqueDur.get(splitSpaceStr[1])=="null") {
+                                resultat=disqueDur.get(splitSpaceStr[1]);
                             }
+                            else {
+                                String keyExp = splitSpaceStr[1];
+                                String second = splitSpaceStr[2];
+                                disqueDur.ExpireDuration(keyExp,second);
+                                resultat="en cours";
+                            }
+
                             break;
                         case "SUB" : //Adrien
                             if (Objects.equals(str.substring(0, 9).toUpperCase(), "SUBSCRIBE")){
