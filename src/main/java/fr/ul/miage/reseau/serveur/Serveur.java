@@ -20,6 +20,8 @@ import java.util.HashMap;
  * Serveur web minimaliste.
  */
 public class Serveur implements Runnable {
+
+    private static DisqueDur disqueDur = new DisqueDur();
     
    public static void main(String[] args) {
         (new Serveur()).run();
@@ -29,11 +31,31 @@ public class Serveur implements Runnable {
     public void run() {
         try {
             final InetAddress bindAddress = InetAddress.getByName("0.0.0.0");
-            try(final ServerSocket server = new ServerSocket(6379, 1, bindAddress)) {
+            final ServerSocket server = new ServerSocket(6379, 1, bindAddress);
+            disqueDur = new DisqueDur();
+            System.out.println("Serveur démarré.");
 
-                System.out.println("Attente de connexion ...");
+            while (true) {
                 final Socket client = server.accept();
-                DisqueDur disqueDur = new DisqueDur();
+                final Thread thread = new Thread(new GestionUniqueClient(client));
+                System.out.println(client.getRemoteSocketAddress().toString());
+                thread.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static class GestionUniqueClient implements Runnable {
+        private final Socket client;
+
+        public GestionUniqueClient(Socket client) {
+            this.client = client;
+        }
+
+        @Override
+        public void run() {
+            try {
                 boolean start = true;
 
                 final OutputStream out = client.getOutputStream();
@@ -133,9 +155,9 @@ public class Serveur implements Runnable {
                             }
                             break;
                         case "DEL" :
-                            /*
-                                on peut avoir plusieurs arguments (key)
-                             */
+                        /*
+                            on peut avoir plusieurs arguments (key)
+                         */
                             String[] stringSplited = str.split("\\s+");
                             int nb = 0;
                             for (int i = 1; i < stringSplited.length; i++) {
@@ -148,9 +170,9 @@ public class Serveur implements Runnable {
                             break;
                         case "EXI" :
                             if (Objects.equals(str.substring(0, 6).toUpperCase(), "EXISTS")){
-                                /*
-                                    on peut avoir plusieurs arguments (key)
-                                 */
+                            /*
+                                on peut avoir plusieurs arguments (key)
+                             */
                                 String[] strSplited = str.split("\\s+");
                                 int nbExist = 0;
 
@@ -209,11 +231,12 @@ public class Serveur implements Runnable {
                     }
                     out.write(("HTTP/1.0 200 OK\n"+resultat).getBytes());
                 }
-            }
 
-        } catch(IOException e) {
-            e.printStackTrace(System.err);
+            } catch(IOException e) {
+                e.printStackTrace(System.err);
+            }
         }
     }
+
 
 }
