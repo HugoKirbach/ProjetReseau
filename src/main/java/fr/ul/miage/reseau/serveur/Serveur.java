@@ -139,7 +139,7 @@ public class Serveur implements Runnable {
                             String[] stringSplited = str.split("\\s+");
                             int nb = 0;
                             for (int i = 1; i < stringSplited.length; i++) {
-                                if(disqueDur.del(str))
+                                if(disqueDur.del(stringSplited[i]))
                                 {
                                     nb++;
                                 };
