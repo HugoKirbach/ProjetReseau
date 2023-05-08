@@ -10,13 +10,16 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Lit l'entrée standard et envoie la chaîne saisie
- * au serveur pour conversion en majuscule.
+ * Envoi et lit les messages du serveur.
  * Ne gère que des chaînes d'au plus 80 **octets**.
  */
 public class Client implements Runnable {
 
-    public static void main(String[] args) {
+    public InputStream in;
+    public OutputStream out;
+
+    public static void main(String[] args)
+    {
         (new Client()).run();
     }
 
@@ -25,28 +28,36 @@ public class Client implements Runnable {
         try {
             final InetAddress remoteAddress = InetAddress.getByName("127.0.0.1");
             try(final Socket server = new Socket(remoteAddress, 6379)) {
-                final OutputStream out = server.getOutputStream();
-                final InputStream in = server.getInputStream();
+                this.out = server.getOutputStream();
+                this.in = server.getInputStream();
 
                 final BufferedReader br = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
 
                 final byte[] buffer = new byte[80];
-                while (true) {
-                    String line = br.readLine();
-                    if (line != null) {
-                        // envoi de la chaîne au serveur
-                        out.write(line.getBytes(StandardCharsets.ISO_8859_1));
+                while (true)
+                {
+                    // Soit on attend l'envoi de la commande
+                    if (System.in.available() > 0)
+                    {
+                        String line = br.readLine();
+                        if (line != null)
+                        {
+                            // envoi de la chaîne au serveur
+                            out.write(line.getBytes(StandardCharsets.ISO_8859_1));
+                        }
+                    }
 
-                        // récupération de la chaîne en majuscules
+                    // Soit on attend une réponse du serveur
+                    if (in.available() > 0)
+                    {
                         final int numRead = in.read(buffer);
-
-                        // le serveur utilise de l'utf-8 donc si on envoie des caractères exotiques, crack !
                         System.out.println(new String(buffer, 0, numRead, StandardCharsets.ISO_8859_1));
                     }
                 }
             }
 
-        } catch(IOException e) {
+        } catch(IOException e)
+        {
             e.printStackTrace(System.err);
         }
     }

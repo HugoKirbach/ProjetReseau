@@ -9,19 +9,41 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.HashMap;
 
 /**
  * Serveur web minimaliste.
  */
 public class Serveur implements Runnable {
 
+    public static HashMap<String, List<OutputStream>> channels = new HashMap<>();
     private static DisqueDur disqueDur = new DisqueDur();
+
+    // Autres fonction du serveur
+    public static synchronized void subscribe(String channel, OutputStream out)
+    {
+        channels.computeIfAbsent(channel, k -> new ArrayList<>()).add(out);
+    }
+
+    public static synchronized void unsubscribe(String channel, OutputStream out)
+    {
+        channels.computeIfPresent(channel, (key, value) -> {
+            value.remove(out);
+            return value.isEmpty() ? null : value;
+        });
+    }
+
+    public static synchronized void publish(String channel, String message) throws IOException
+    {
+        List<OutputStream> outs = channels.get(channel);
+        if (outs != null) {
+            for (OutputStream out : outs) {
+                out.write(message.getBytes());
+            }
+        }
+    }
     
    public static void main(String[] args) {
         (new Serveur()).run();
@@ -70,8 +92,8 @@ public class Serveur implements Runnable {
                     System.out.println("< " + str);
 
                     String substr = str.substring(0,3);
-                    String resultat = new String();
-                    //disqueDur.display();
+                    String resultat = "";
+                    String channel  = "";
 
                     String[] splitSpaceStr = str.split("\\s+");
                     switch(substr.toUpperCase())
@@ -186,7 +208,7 @@ public class Serveur implements Runnable {
                                 resultat = String.valueOf((nbExist));
                             }
                             break;
-                        case "EXP" ://Adrien
+                        case "EXP" :
                             //TODO prendre en compte qu'il y a 2 paramètres
                             if (Objects.equals(str.substring(0, 6).toUpperCase(), "EXPIRE")){
                                 //System.out.println(disqueDur.get(splitSpaceStr[1]));
@@ -199,23 +221,25 @@ public class Serveur implements Runnable {
                                     disqueDur.ExpireDuration(key,second);
                                     resultat="en cours";
                                 }
-
-
                             }
                             break;
-                        case "SUB" : //Adrien
+                        case "SUB" :
                             if (Objects.equals(str.substring(0, 9).toUpperCase(), "SUBSCRIBE")){
-
+                                channel = splitSpaceStr[1];
+                                subscribe(channel, out);
                             }
                             break;
-                        case "PUB" : //
+                        case "PUB" :
                             if (Objects.equals(str.substring(0, 7).toUpperCase(), "PUBLISH")){
-
+                                channel = splitSpaceStr[1];
+                                String message = splitSpaceStr[2];
+                                publish(channel, message);
                             }
                             break;
-                        case "UNS" : //
+                        case "UNS" :
                             if (Objects.equals(str.substring(0, 11).toUpperCase(), "UNSUBSCRIBE")){
-
+                                channel = splitSpaceStr[1];
+                                unsubscribe(channel, out);
                             }
                             break;
 
@@ -233,10 +257,8 @@ public class Serveur implements Runnable {
                 }
 
             } catch(IOException e) {
-                e.printStackTrace(System.err);
+                System.out.println(e.getMessage());
             }
         }
     }
-
-
 }
