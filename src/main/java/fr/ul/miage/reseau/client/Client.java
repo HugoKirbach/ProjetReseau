@@ -63,3 +63,12 @@ public class Client implements Runnable {
     }
 
 }
+/** scenario de test
+ * line = "SET nabil "Hugo aime les pizzas" | GET nabil | STRLEN nabil"
+ * line = "EXIPRE nabil 60"
+ * line = "SET toto "tata" | EXISTS toto"
+ * line = "SET toto "tata" | APPEND toto nana"
+ * line = "INCR hugo | INCR hugo | DECR hugo"
+ * line = "SUBSCRIBE coucou | PUBLISH coucou 1234 | UNSUBSCRIBE coucou"
+ * out.write(line.getBytes(StandardCharsets.ISO_8859_1));
+ */

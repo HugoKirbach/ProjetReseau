@@ -13,9 +13,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Serveur web minimaliste.
- */
 public class Serveur implements Runnable {
 
     public static HashMap<String, List<OutputStream>> channels = new HashMap<>();
