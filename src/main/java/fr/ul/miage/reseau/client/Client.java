@@ -43,7 +43,7 @@ public class Client implements Runnable {
                         if (line != null)
                         {
                             // envoi de la chaîne au serveur
-                            out.write(line.getBytes(StandardCharsets.ISO_8859_1));
+                            out.write(line.getBytes(StandardCharsets.UTF_8));
                         }
                     }
 
@@ -51,7 +51,7 @@ public class Client implements Runnable {
                     if (in.available() > 0)
                     {
                         final int numRead = in.read(buffer);
-                        System.out.println(new String(buffer, 0, numRead, StandardCharsets.ISO_8859_1));
+                        System.out.println(new String(buffer, 0, numRead, StandardCharsets.UTF_8));
                     }
                 }
             }
@@ -70,5 +70,5 @@ public class Client implements Runnable {
  * line = "SET toto "tata" | APPEND toto nana"
  * line = "INCR hugo | INCR hugo | DECR hugo"
  * line = "SUBSCRIBE coucou | PUBLISH coucou 1234 | UNSUBSCRIBE coucou"
- * out.write(line.getBytes(StandardCharsets.ISO_8859_1));
+ * out.write(line.getBytes(StandardCharsets.UTF_8));
  */
