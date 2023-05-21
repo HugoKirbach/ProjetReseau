@@ -119,7 +119,7 @@ public class Serveur implements Runnable {
                                     break;
                                 case "SET":
                                     disqueDur.put(args[1], args[2]);
-                                    resultat = "+OK\r\n";
+                                    resultat = "+OK-OK\r\n";
                                     break;
                                 case "STR":
                                     if (Objects.equals(substr.substring(0, 6).toUpperCase(), "STRLEN")) {
