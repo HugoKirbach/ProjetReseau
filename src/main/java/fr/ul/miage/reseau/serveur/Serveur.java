@@ -109,147 +109,185 @@ public class Serveur implements Runnable {
 
 
                             //Gestion des actions des commands
-                            switch (substr.toUpperCase().substring(0,3)) {
-                                case "GET":
-                                    if (disqueDur.get(args[1]) != null) {
-                                        resultat = "$" + disqueDur.get(args[1]).length() + "\r\n" + disqueDur.get(args[1]) + "\r\n";
-                                    } else {
-                                        resultat = "$-1\r\n";
-                                    }
-                                    break;
-                                case "SET":
-                                    disqueDur.put(args[1], args[2]);
-                                    resultat = "+OK\r\n";
-                                    break;
-                                case "STR":
-                                    if (Objects.equals(substr.substring(0, 6).toUpperCase(), "STRLEN")) {
-                                        String key = disqueDur.get(args[1]);
-                                        int longueur = key.length();
-                                        resultat = ":" + longueur + "\r\n";
-                                    }
-                                    break;
-                                case "APP":
-                                    //TODO prendre en compte qu'il y a 2 paramètres
-                                    if (Objects.equals(substr.substring(0, 6).toUpperCase(), "APPEND")) {
-                                        String key = args[1];
-                                        String value = args[2];
-
-                                        if (disqueDur.containsKey(key) && disqueDur.get(key) instanceof String) {
-                                            String ancienneValeur = disqueDur.get(key);
-                                            String nouvelleValeur = ancienneValeur.concat(value);
-                                            disqueDur.put(key, nouvelleValeur);
-                                            resultat = ":" + nouvelleValeur.length() + "\r\n";
+                            if(substr.length()>2) {
+                                switch (substr.toUpperCase().substring(0, 3)) {
+                                    case "GET":
+                                        System.out.println(args.length);
+                                        if (args.length < 2 || disqueDur.get(args[1]) == null) {
+                                            resultat = "-ERR il manque un paramètre ou la clé n'existe pas\r\n";
                                         } else {
-                                            disqueDur.put(key, value);
-                                            resultat = ":" + value.length() + "\r\n";
+                                            resultat = "$" + disqueDur.get(args[1]).length() + "\r\n" + disqueDur.get(args[1]) + "\r\n";
                                         }
-                                    }
-                                    break;
-                                case "INC":
-                                    if (substr.substring(0, 4).toUpperCase().equals("INCR")) {
-                                        try {
-                                            //gérer le cas clé n'existe pas --> set à 0
-                                            if (disqueDur.get(args[1]) == null) {
-                                                disqueDur.put(args[1], "0");
-                                                resultat = ":" + disqueDur.get(args[1]) + "\r\n";
+                                        break;
+                                    case "SET":
+                                        System.out.println("a" + args.length);
+                                        if (args.length < 3 || disqueDur.exist(args[1])) {
+                                            resultat = "-ERR il manque un ou plusieurs paramètre pour la commande ou la clé n'existe pas\r\n";
+                                        } else {
+                                            disqueDur.put(args[1], args[2]);
+                                            resultat = "+OK\r\n";
+                                        }
+
+                                        break;
+                                    case "STR":
+                                        if (substr.length() == 6 && Objects.equals(substr.substring(0, 6).toUpperCase(), "STRLEN")) {
+                                            if (disqueDur.exist(args[1])) {
+
+                                                String key = disqueDur.get(args[1]);
+                                                int longueur = key.length();
+                                                resultat = ":" + longueur + "\r\n";
                                             } else {
-                                                disqueDur.put(args[1], (disqueDur.get(args[1]) + 1));
-                                                resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
+                                                resultat = "-ERR la clé que vous avez entré n'existe pas sur le serveur\r\n";
                                             }
-                                        } catch (Exception e) {
-                                            resultat = "-ERR n'est pas un int";
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
                                         }
-                                    }
-                                    break;
-                                case "DEC":
-                                    if (substr.substring(0, 4).toUpperCase().equals("DECR")) {
-                                        try {
-                                            //gérer le cas clé n'existe pas --> set à 0
-                                            if (disqueDur.get(args[1]) == null) {
-                                                disqueDur.put(args[1], "0");
-                                                resultat = ":" +disqueDur.get(args[1])+ "\r\n";
+                                        break;
+                                    case "APP":
+                                        //TODO prendre en compte qu'il y a 2 paramètres
+                                        if (substr.length() == 6 && Objects.equals(substr.substring(0, 6).toUpperCase(), "APPEND")) {
+                                            String key = args[1];
+                                            String value = args[2];
+
+                                            if (disqueDur.containsKey(key) && disqueDur.get(key) instanceof String) {
+                                                String ancienneValeur = disqueDur.get(key);
+                                                String nouvelleValeur = ancienneValeur.concat(value);
+                                                disqueDur.put(key, nouvelleValeur);
+                                                resultat = ":" + nouvelleValeur.length() + "\r\n";
                                             } else {
-                                                disqueDur.put(args[1], String.valueOf((Integer.parseInt(disqueDur.get(args[1])) - 1)));
-                                                resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
+                                                disqueDur.put(key, value);
+                                                resultat = ":" + value.length() + "\r\n";
                                             }
-                                        } catch (Exception e) {
-                                            resultat = "-ERR n'est pas un int";
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
                                         }
-                                    }
-                                    break;
-                                case "DEL":
+                                        break;
+                                    case "INC":
+                                        if (substr.length() == 4 && substr.substring(0, 4).toUpperCase().equals("INCR")) {
+                                            try {
+                                                //gérer le cas clé n'existe pas --> set à 0
+                                                if (disqueDur.get(args[1]) == null) {
+                                                    disqueDur.put(args[1], "0");
+                                                    resultat = ":" + disqueDur.get(args[1]) + "\r\n";
+                                                } else {
+                                                    disqueDur.put(args[1], (disqueDur.get(args[1]) + 1));
+                                                    resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
+                                                }
+                                            } catch (Exception e) {
+                                                resultat = "-ERR n'est pas un int";
+                                            }
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
+                                        }
+                                        break;
+                                    case "DEC":
+                                        if (substr.length() == 4 && substr.substring(0, 4).toUpperCase().equals("DECR")) {
+                                            try {
+                                                //gérer le cas clé n'existe pas --> set à 0
+                                                if (disqueDur.get(args[1]) == null) {
+                                                    disqueDur.put(args[1], "0");
+                                                    resultat = ":" + disqueDur.get(args[1]) + "\r\n";
+                                                } else {
+                                                    disqueDur.put(args[1], String.valueOf((Integer.parseInt(disqueDur.get(args[1])) - 1)));
+                                                    resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
+                                                }
+                                            } catch (Exception e) {
+                                                resultat = "-ERR n'est pas un int";
+                                            }
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
+                                        }
+                                        break;
+                                    case "DEL":
                                     /*
                                         on peut avoir plusieurs arguments (key)
                                      */
-                                    int nb = 0;
-                                    for (int i = 1; i < args.length; i++) {
-                                        if (disqueDur.del(args[i])) {
-                                            nb++;
+                                        int nb = 0;
+                                        for (int i = 1; i < args.length; i++) {
+                                            if (disqueDur.del(args[i])) {
+                                                nb++;
+                                            }
                                         }
-                                    }
-                                    resultat = ":" + nb + "\r\n";
-                                    break;
-                                case "EXI":
-                                    if (Objects.equals(substr.substring(0, 6).toUpperCase(), "EXISTS")) {
+                                        resultat = ":" + nb + "\r\n";
+                                        break;
+                                    case "EXI":
+                                        if (substr.length() == 6 && !Objects.equals(substr.substring(0, 6).toUpperCase(), "EXISTS")) {
+                                            System.out.println("aze");
                                         /*
                                             on peut avoir plusieurs arguments (key)
                                          */
-                                        int nbExist = 0;
+                                            int nbExist = 0;
 
-                                        for (int i = 2; i < args.length; i++) {
-                                            String currentKey = args[i];
-                                            if (disqueDur.exist(currentKey)) {
-                                                nbExist++;
+                                            for (int i = 2; i < args.length; i++) {
+                                                String currentKey = args[i];
+                                                if (disqueDur.exist(currentKey)) {
+                                                    nbExist++;
+                                                }
                                             }
-                                        }
-                                        resultat = ":" + nbExist + "\r\n";
-                                    }
-                                    break;
-                                case "EXP":
-                                    //TODO prendre en compte qu'il y a 2 paramètres
-                                    if (Objects.equals(substr.substring(0, 6).toUpperCase(), "EXPIRE")) {
-                                        if (disqueDur.get(args[1]) == null) {
-                                            resultat = "-ERR la clé n'existe pas";
+                                            resultat = ":" + nbExist + "\r\n";
                                         } else {
-                                            String key = args[1];
-                                            String second = args[2];
-                                            disqueDur.ExpireDuration(key, second);
-                                            resultat = "+OK\r\n";
+                                            System.out.println("ici");
+                                            resultat = "-ERR la commande n'existe pas\r\n";
                                         }
-                                    }
-                                    break;
-                                case "SUB":
-                                    if (Objects.equals(substr.substring(0, 9).toUpperCase(), "SUBSCRIBE")) {
-                                        channel = args[1];
-                                        subscribe(channel, out);
-                                        resultat = "+OK\r\n";
-                                    }
-                                    break;
-                                case "PUB":
-                                    if (Objects.equals(substr.substring(0, 7).toUpperCase(), "PUBLISH")) {
-                                        channel = args[1];
-                                        String message = args[2];
-                                        publish(channel, message);
-                                        resultat = "+OK\r\n";
-                                    }
-                                    break;
-                                case "UNS":
-                                    if (Objects.equals(substr.substring(0, 11).toUpperCase(), "UNSUBSCRIBE")) {
-                                        channel = args[1];
-                                        unsubscribe(channel, out);
-                                        resultat = "+OK\r\n";
-                                    }
-                                    break;
+                                        break;
+                                    case "EXP":
+                                        //TODO prendre en compte qu'il y a 2 paramètres
+                                        if (substr.length() == 6 && Objects.equals(substr.substring(0, 6).toUpperCase(), "EXPIRE")) {
+                                            if (disqueDur.get(args[1]) == null || args.length < 3) {
+                                                resultat = "-ERR la clé n'existe pas ou il manque des arguements\r\n";
+                                            } else {
+                                                String key = args[1];
+                                                String second = args[2];
+                                                disqueDur.ExpireDuration(key, second);
+                                                resultat = "+OK\r\n";
+                                            }
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
+                                        }
+                                        break;
+                                    case "SUB":
+                                        if (Objects.equals(substr.substring(0, 9).toUpperCase(), "SUBSCRIBE")) {
+                                            channel = args[1];
+                                            subscribe(channel, out);
+                                            resultat = "+OK\r\n";
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
+                                        }
+                                        break;
+                                    case "PUB":
+                                        if (substr.length() == 7 && Objects.equals(substr.substring(0, 7).toUpperCase(), "PUBLISH")) {
+                                            channel = args[1];
+                                            String message = args[2];
+                                            publish(channel, message);
+                                            resultat = "+OK\r\n";
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
+                                        }
+                                        break;
+                                    case "UNS":
+                                        if (substr.length() == 11 && Objects.equals(substr.substring(0, 11).toUpperCase(), "UNSUBSCRIBE")) {
+                                            channel = args[1];
+                                            unsubscribe(channel, out);
+                                            resultat = "+OK\r\n";
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
+                                        }
+                                        break;
 
-                                case "QUI":
-                                    if (Objects.equals(substr.substring(0, 4).toUpperCase(), "QUIT")) {
-                                        start = false;
-                                        resultat = "+OK\r\n";
-                                    }
-                                    break;
-                                default:
-                                    resultat = "-ERR Commande pas valide\r\n";
-                                    break;
+                                    case "QUI":
+                                        if (substr.length() == 4 && Objects.equals(substr.substring(0, 4).toUpperCase(), "QUIT")) {
+                                            start = false;
+                                            resultat = "+OK\r\n";
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas\r\n";
+                                        }
+                                        break;
+                                    default:
+                                        resultat = "-ERR Commande pas valide\r\n";
+                                        break;
+                                }
+                            }else{
+                                resultat = "-ERR la chaine est trop petite il faut moins 3 charactères  \r\n";
                             }
                             out.write((resultat).getBytes());
                         }
