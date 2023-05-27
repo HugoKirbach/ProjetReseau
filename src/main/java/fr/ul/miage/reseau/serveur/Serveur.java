@@ -170,7 +170,7 @@ public class Serveur implements Runnable {
                                                     disqueDur.put(args[1], "0");
                                                     resultat = ":" + disqueDur.get(args[1]) + "\r\n";
                                                 } else {
-                                                    disqueDur.put(args[1], (disqueDur.get(args[1]) + 1));
+                                                    disqueDur.put(args[1], String.valueOf((Integer.parseInt(disqueDur.get(args[1])) + 1)));
                                                     resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
                                                 }
                                             } catch (Exception e) {
