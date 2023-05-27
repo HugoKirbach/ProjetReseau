@@ -10,13 +10,26 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Serveur implements Runnable {
 
+
+    private final int port;
+    private static String bindAdress = "0.0.0.0";
+
+    public Serveur(int port){
+        this.port = port;
+    }
+
     public static HashMap<String, List<OutputStream>> channels = new HashMap<>();
     private static DisqueDur disqueDur = new DisqueDur();
+    private static boolean master = false;
+
+
+
+    private static HashMap<Integer, String> masterCommandList = new HashMap<>();
+    private static Integer numCommand = 1;
+
 
     // Autres fonction du serveur
     public static synchronized void subscribe(String channel, OutputStream out)
@@ -42,15 +55,55 @@ public class Serveur implements Runnable {
         }
     }
 
+    private static synchronized void addMasterCommand(String command){
+        if(master){
+            System.out.println("ajout commande: "+command);
+            masterCommandList.put(numCommand,command);
+            numCommand++;
+        }
+    }
+
+    private static synchronized void connectionMaster(int port, String bindAddress){
+        final ServerSocket server;
+        try {
+            server = new ServerSocket(port, 1, InetAddress.getByName(bindAddress));
+            disqueDur = new DisqueDur();
+
+            while (true) {
+                final Socket client = server.accept();
+                final Thread thread = new Thread(new GestionUniqueClient(client));
+                System.out.println(client.getRemoteSocketAddress().toString());
+                thread.start();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public static String getBindAdress() {
+        return bindAdress;
+    }
+
+    public synchronized HashMap<Integer, String> getMasterCommandList() {
+        return masterCommandList;
+    }
+
+    public synchronized DisqueDur getDisqueDur(){
+        return disqueDur;
+    }
+
    public static void main(String[] args) {
-        (new Serveur()).run();
+        (new Serveur(args[0]!=null?Integer.parseInt(args[0]):6379) ).run(); //regarde si il y a un argument de saisie (le port)
+       //s'il n'y en a pas, on met le port 6379
     }
 
     @Override
     public void run() {
         try {
-            final InetAddress bindAddress = InetAddress.getByName("0.0.0.0");
-            final ServerSocket server = new ServerSocket(6379, 1, bindAddress);
+            final InetAddress bindAddress = InetAddress.getByName(getBindAdress());
+            final ServerSocket server = new ServerSocket(port, 1, bindAddress);
+
             disqueDur = new DisqueDur();
             System.out.println("Serveur démarré.");
 
@@ -116,15 +169,17 @@ public class Serveur implements Runnable {
                                         if (args.length < 2 || disqueDur.get(args[1]) == null) {
                                             resultat = "-ERR il manque un paramètre ou la clé n'existe pas\r\n";
                                         } else {
+                                            addMasterCommand(str);
                                             resultat = "$" + disqueDur.get(args[1]).length() + "\r\n" + disqueDur.get(args[1]) + "\r\n";
                                         }
                                         break;
                                     case "SET":
                                         System.out.println("a" + args.length);
                                         if (args.length < 3 || disqueDur.exist(args[1])) {
-                                            resultat = "-ERR il manque un ou plusieurs paramètre pour la commande ou la clé n'existe pas\r\n";
+                                            resultat = "-ERR il manque un ou plusieurs paramètre pour la commande ou la clé existe déjà\r\n";
                                         } else {
                                             disqueDur.put(args[1], args[2]);
+                                            addMasterCommand(str);
                                             resultat = "+OK\r\n";
                                         }
 
@@ -136,6 +191,7 @@ public class Serveur implements Runnable {
                                                 String key = disqueDur.get(args[1]);
                                                 int longueur = key.length();
                                                 resultat = ":" + longueur + "\r\n";
+                                                addMasterCommand(str);
                                             } else {
                                                 resultat = "-ERR la clé que vous avez entré n'existe pas sur le serveur\r\n";
                                             }
@@ -158,6 +214,7 @@ public class Serveur implements Runnable {
                                                 disqueDur.put(key, value);
                                                 resultat = ":" + value.length() + "\r\n";
                                             }
+                                            addMasterCommand(str);
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
                                         }
@@ -173,6 +230,7 @@ public class Serveur implements Runnable {
                                                     disqueDur.put(args[1], String.valueOf((Integer.parseInt(disqueDur.get(args[1])) + 1)));
                                                     resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
                                                 }
+                                                addMasterCommand(str);
                                             } catch (Exception e) {
                                                 resultat = "-ERR n'est pas un int\r\n";
                                             }
@@ -191,6 +249,7 @@ public class Serveur implements Runnable {
                                                     disqueDur.put(args[1], String.valueOf((Integer.parseInt(disqueDur.get(args[1])) - 1)));
                                                     resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
                                                 }
+                                                addMasterCommand(str);
                                             } catch (Exception e) {
                                                 resultat = "-ERR n'est pas un int\r\n";
                                             }
@@ -209,6 +268,7 @@ public class Serveur implements Runnable {
                                             }
                                         }
                                         resultat = ":" + nb + "\r\n";
+                                        addMasterCommand(str);
                                         break;
                                     case "EXI":
                                         if (substr.length() == 6 && !Objects.equals(substr.substring(0, 6).toUpperCase(), "EXISTS")) {
@@ -225,6 +285,7 @@ public class Serveur implements Runnable {
                                                 }
                                             }
                                             resultat = ":" + nbExist + "\r\n";
+                                            addMasterCommand(str);
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
                                         }
@@ -239,6 +300,7 @@ public class Serveur implements Runnable {
                                                 String second = args[2];
                                                 disqueDur.ExpireDuration(key, second);
                                                 resultat = "+OK\r\n";
+                                                addMasterCommand(str);
                                             }
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
@@ -249,6 +311,7 @@ public class Serveur implements Runnable {
                                             channel = args[1];
                                             subscribe(channel, out);
                                             resultat = "+OK\r\n";
+                                            addMasterCommand(str);
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
                                         }
@@ -259,6 +322,7 @@ public class Serveur implements Runnable {
                                             String message = args[2];
                                             publish(channel, message);
                                             resultat = "+OK\r\n";
+                                            addMasterCommand(str);
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
                                         }
@@ -268,6 +332,7 @@ public class Serveur implements Runnable {
                                             channel = args[1];
                                             unsubscribe(channel, out);
                                             resultat = "+OK\r\n";
+                                            addMasterCommand(str);
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
                                         }
@@ -277,8 +342,39 @@ public class Serveur implements Runnable {
                                         if (substr.length() == 4 && Objects.equals(substr.substring(0, 4).toUpperCase(), "QUIT")) {
                                             start = false;
                                             resultat = "+OK\r\n";
+                                            addMasterCommand(str);
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
+                                        }
+                                        break;
+                                    case "REP":
+                                        if (substr.length() == 9 && Objects.equals(substr.substring(0, 9).toUpperCase(), "REPLICAOF") && args[2]!=null){
+                                            if (args[2].toUpperCase().equals("ONE") ) {
+                                                //case REPLICAOF NO ONE --> Definit Master
+                                                master = true;
+                                                resultat = "+OK est Master\r\n";
+                                            } else if (args[2].length() == 4){ //vérification normalité format port
+                                                // try/catch parsing int pour etre sur que ça soit un port valide
+                                                //se connecter a un clien avec le port = args[2]
+                                                try {
+                                                    int port = Integer.parseInt(args[2]);
+                                                    Serveur s = new Serveur(port);
+                                                    //s.run();.
+
+                                                    System.out.println("Test aff disque dur: ");
+                                                    s.getDisqueDur().display();
+
+                                                    //executer toutes les commandes stocké dans le serveur.mapCommandeMaster
+                                                    resultat = "+OK blabla\r\n";
+
+                                                } catch (Exception e){
+                                                    resultat = "-ERR le port saisit est invalide\r\n";
+                                                }
+                                            } else {
+                                                resultat = "-ERR argument(s) invalide\r\n";
+                                            }
+                                        } else {
+                                            resultat = "-ERR la commande n'existe pas/est invalide\r\n";
                                         }
                                         break;
                                     default:
@@ -288,6 +384,7 @@ public class Serveur implements Runnable {
                             }else{
                                 resultat = "-ERR la chaine est trop petite il faut moins 3 charactères  \r\n";
                             }
+                            System.out.println("test interne: "+masterCommandList.size());
                             out.write((resultat).getBytes());
                         }
                     }
@@ -297,6 +394,8 @@ public class Serveur implements Runnable {
                 System.out.println(e.getMessage());
             }
         }
+
+
 
         private String[] commandeToArg(String[] commandes, int num) {
             String[] resultat = new String[num];
