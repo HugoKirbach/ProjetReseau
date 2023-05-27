@@ -174,7 +174,7 @@ public class Serveur implements Runnable {
                                                     resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
                                                 }
                                             } catch (Exception e) {
-                                                resultat = "-ERR n'est pas un int";
+                                                resultat = "-ERR n'est pas un int\r\n";
                                             }
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
@@ -192,7 +192,7 @@ public class Serveur implements Runnable {
                                                     resultat = ":" + (Integer.parseInt(disqueDur.get(args[1]))) + "\r\n";
                                                 }
                                             } catch (Exception e) {
-                                                resultat = "-ERR n'est pas un int";
+                                                resultat = "-ERR n'est pas un int\r\n";
                                             }
                                         } else {
                                             resultat = "-ERR la commande n'existe pas\r\n";
@@ -226,7 +226,6 @@ public class Serveur implements Runnable {
                                             }
                                             resultat = ":" + nbExist + "\r\n";
                                         } else {
-                                            System.out.println("ici");
                                             resultat = "-ERR la commande n'existe pas\r\n";
                                         }
                                         break;
