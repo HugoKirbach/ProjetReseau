@@ -82,7 +82,7 @@ public class Serveur implements Runnable {
                 final InputStream in = client.getInputStream();
 
                 while(start) {
-                    final byte[] buffer = new byte[10000];
+                    final byte[] buffer = new byte[1024];
                     int numRead = in.read(buffer);
 
                     if (numRead == -1) {
@@ -211,14 +211,13 @@ public class Serveur implements Runnable {
                                         resultat = ":" + nb + "\r\n";
                                         break;
                                     case "EXI":
-                                        if (substr.length() == 6 && !Objects.equals(substr.substring(0, 6).toUpperCase(), "EXISTS")) {
-                                            System.out.println("aze");
+                                        if (substr.length() == 6 && Objects.equals(substr.substring(0, 6).toUpperCase(), "EXISTS")) {
                                         /*
                                             on peut avoir plusieurs arguments (key)
                                          */
                                             int nbExist = 0;
 
-                                            for (int i = 2; i < args.length; i++) {
+                                            for (int i = 0; i < args.length; i++) {
                                                 String currentKey = args[i];
                                                 if (disqueDur.exist(currentKey)) {
                                                     nbExist++;
