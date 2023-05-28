@@ -112,7 +112,6 @@ public class Serveur implements Runnable {
                             if(substr.length()>2) {
                                 switch (substr.toUpperCase().substring(0, 3)) {
                                     case "GET":
-                                        System.out.println(args.length);
                                         if (args.length < 2 || disqueDur.get(args[1]) == null) {
                                             resultat = "-ERR il manque un paramètre ou la clé n'existe pas\r\n";
                                         } else {
@@ -120,8 +119,7 @@ public class Serveur implements Runnable {
                                         }
                                         break;
                                     case "SET":
-                                        System.out.println("a" + args.length);
-                                        if (args.length < 3 || disqueDur.exist(args[1])) {
+                                        if (args.length < 3 || !disqueDur.exist(args[1])) {
                                             resultat = "-ERR il manque un ou plusieurs paramètre pour la commande ou la clé n'existe pas\r\n";
                                         } else {
                                             disqueDur.put(args[1], args[2]);
