@@ -119,9 +119,10 @@ public class Serveur implements Runnable {
                                         }
                                         break;
                                     case "SET":
-                                        if (args.length < 3 || !disqueDur.exist(args[1])) {
-                                            resultat = "-ERR il manque un ou plusieurs paramètre pour la commande ou la clé n'existe pas\r\n";
+                                        if (args.length < 3) {
+                                            resultat = "-ERR il manque un ou plusieurs paramètres pour la commande\r\n";
                                         } else {
+                                            if (disqueDur.exist(args[1])) disqueDur.del(args[1]);
                                             disqueDur.put(args[1], args[2]);
                                             resultat = "+OK\r\n";
                                         }
