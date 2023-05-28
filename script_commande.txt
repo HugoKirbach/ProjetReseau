@@ -1,0 +1,11 @@
+SET nabil "Hugo aime les pizzas"
+GET nabil
+STRLEN nabil
+EXPIRE nabil 60
+SET toto tata
+EXISTS toto
+SET toto "tata"
+APPEND toto nana
+INCR hugo
+INCR hugo
+DECR hugo
